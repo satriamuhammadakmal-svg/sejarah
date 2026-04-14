@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Media Interaktif Sejarah Pro Max</title>
+
+<style>
+body {
+    font-family: 'Segoe UI';
+    margin: 0;
+    background: linear-gradient(135deg, #141e30, #243b55);
+    color: white;
+}
+
+.hidden { display: none; }
+
+/* NAVBAR */
+.navbar {
+    background: rgba(0,0,0,0.7);
+    padding: 15px;
+    text-align: center;
+}
+
+.navbar button {
+    margin: 5px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 20px;
+    background: orange;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.navbar button:hover {
+    transform: scale(1.1);
+}
+
+/* CONTAINER */
+.container {
+    width: 80%;
+    margin: auto;
+    text-align: center;
+    animation: fade 0.5s;
+}
+
+@keyframes fade {
+    from {opacity: 0;}
+    to {opacity: 1;}
+}
+
+/* CARD */
+.card {
+    background: rgba(255,255,255,0.1);
+    padding: 20px;
+    margin-top: 20px;
+    border-radius: 15px;
+}
+
+img {
+    width: 200px;
+    border-radius: 10px;
+    margin: 10px;
+}
+
+iframe {
+    border-radius: 10px;
+}
+
+/* QUIZ */
+button.answer {
+    display: block;
+    margin: 10px auto;
+    padding: 10px;
+    width: 60%;
+    border-radius: 10px;
+}
+
+.correct { background: green !important; }
+.wrong { background: red !important; }
+
+#timer {
+    font-size: 20px;
+    color: yellow;
+}
+
+.progress {
+    height: 10px;
+    background: gray;
+    border-radius: 10px;
+}
+
+.progress-bar {
+    height: 10px;
+    background: lime;
+    width: 0%;
+    border-radius: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div id="login" class="container">
+    <h1>Media Interaktif Sejarah</h1>
+    <input type="text" id="username" placeholder="Masukkan Nama" style="padding:10px;">
+    <br><br>
+    <button onclick="startApp()">Masuk</button>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+
+<div class="navbar">
+    <button onclick="showPage('materi')">Materi</button>
+    <button onclick="showPage('video')">Video</button>
+    <button onclick="showPage('kuis')">Kuis</button>
+</div>
+
+<div class="container">
+
+<!-- MATERI -->
+<div id="materi" class="card">
+    <h2>Kerajaan Islam di Indonesia</h2>
+
+    <h3>Samudera Pasai</h3>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/Makam_Sultan_Malik_As-Saleh.jpg">
+    <p>Kerajaan Islam pertama di Indonesia.</p>
+
+    <h3>Demak</h3>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/3/3e/Masjid_Agung_Demak.jpg">
+    <p>Pusat penyebaran Islam di Jawa.</p>
+</div>
+
+<div id="video" class="card hidden">
+    <h2>Video Pembelajaran</h2>
+
+    <p>Video tidak bisa diputar di sini.</p>
+
+    <button onclick="window.open('https://youtu.be/63Uvg-KAJhM', '_blank')">
+        ▶️ Tonton di YouTube
+    </button>
+</div>
+
+<!-- KUIS -->
+<div id="kuis" class="card hidden">
+    <h2 id="question"></h2>
+    <div id="timer">10</div>
+
+    <div class="progress">
+        <div id="progressBar" class="progress-bar"></div>
+    </div>
+
+    <div id="answers"></div>
+</div>
+
+<!-- HASIL -->
+<div id="result" class="card hidden"></div>
+
+</div>
+</div>
+
+<!-- SOUND -->
+<audio id="benar" src="https://www.soundjay.com/button/sounds/button-3.mp3"></audio>
+<audio id="salah" src="https://www.soundjay.com/button/sounds/button-10.mp3"></audio>
+
+<script>
+let username = "";
+let currentQuestion = 0;
+let score = 0;
+let timer;
+let timeLeft = 10;
+
+const quizData = [
+    {
+        question: "Kerajaan Islam pertama di Indonesia?",
+        answers: ["Demak","Samudera Pasai","Aceh","Banten"],
+        correct: 1
+    },
+    {
+        question: "Pendiri Demak?",
+        answers: ["Sultan Agung","Raden Patah","Iskandar Muda","Hayam Wuruk"],
+        correct: 1
+    }
+];
+
+function startApp() {
+    username = document.getElementById("username").value;
+    if(username === "") return alert("Isi nama!");
+
+    document.getElementById("login").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
+}
+
+function showPage(page) {
+    ["materi","video","kuis","result"].forEach(p =>
+        document.getElementById(p).classList.add("hidden")
+    );
+
+    document.getElementById(page).classList.remove("hidden");
+
+    if(page === "kuis") loadQuestion();
+}
+
+function loadQuestion() {
+    resetTimer();
+    let q = quizData[currentQuestion];
+
+    document.getElementById("question").innerText = q.question;
+
+    let answersDiv = document.getElementById("answers");
+    answersDiv.innerHTML = "";
+
+    q.answers.forEach((ans,i) => {
+        let btn = document.createElement("button");
+        btn.innerText = ans;
+        btn.classList.add("answer");
+
+        btn.onclick = () => checkAnswer(i, btn);
+        answersDiv.appendChild(btn);
+    });
+
+    startTimer();
+    updateProgress();
+}
+
+function checkAnswer(i,btn){
+    clearInterval(timer);
+    let correct = quizData[currentQuestion].correct;
+
+    if(i===correct){
+        score++;
+        btn.classList.add("correct");
+        document.getElementById("benar").play();
+    } else {
+        btn.classList.add("wrong");
+        document.getElementById("salah").play();
+    }
+
+    setTimeout(nextQuestion,1000);
+}
+
+function nextQuestion(){
+    currentQuestion++;
+    if(currentQuestion < quizData.length){
+        loadQuestion();
+    } else {
+        showResult();
+    }
+}
+
+function showResult(){
+    showPage("result");
+    document.getElementById("result").innerHTML =
+    `<h2>${username}, skor kamu: ${score}</h2>`;
+}
+
+function startTimer(){
+    timeLeft = 10;
+    timer = setInterval(()=>{
+        timeLeft--;
+        document.getElementById("timer").innerText = timeLeft;
+
+        if(timeLeft<=0){
+            clearInterval(timer);
+            nextQuestion();
+        }
+    },1000);
+}
+
+function resetTimer(){
+    clearInterval(timer);
+}
+
+function updateProgress(){
+    let progress = ((currentQuestion)/quizData.length)*100;
+    document.getElementById("progressBar").style.width = progress + "%";
+}
+</script>
+
+</body>
+</html>
